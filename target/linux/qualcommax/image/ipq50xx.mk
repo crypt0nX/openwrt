@@ -18,6 +18,36 @@ define Build/mstc-header
 	rm -f $@.crclen
 endef
 
+define Device/xiaomi_ax3000
+  $(call Device/FitImage)
+  $(call Device/UbiFit)
+  SOC := ipq5018
+  DEVICE_VENDOR := Xiaomi
+  DEVICE_MODEL := AX3000
+  DEVICE_ALT0_VENDOR := Xiaomi
+  DEVICE_ALT0_MODEL := CR880x
+  DEVICE_ALT0_VARIANT := (M81 version)
+  DEVICE_ALT1_VENDOR := Xiaomi
+  DEVICE_ALT1_MODEL := CR880x
+  DEVICE_ALT1_VARIANT := (M79 version)
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  DEVICE_DTS_CONFIG := config@mp02.1
+#   IMAGES := nand-factory.ubi
+  DEVICE_PACKAGES := \
+	ath11k-firmware-ipq5018-qcn6122 \
+	kmod-ath11k-ahb \
+	kmod-ath11k-pci \
+	wpad-openssl \
+	ethtool \
+	ip-full \
+	ubi-utils \
+	kmod-gpio-button-hotplug \
+	tcpdump \
+	gpiod-tools
+endef
+TARGET_DEVICES += xiaomi_ax3000
+
 define Device/cmcc_pz-l8
 	$(call Device/FitImageLzma)
 	$(call Device/UbiFit)
