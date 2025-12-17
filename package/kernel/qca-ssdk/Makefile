@@ -35,6 +35,7 @@ GCC_VERSION=$(shell echo "$(CONFIG_GCC_VERSION)" | sed 's/[^0-9.]*\([0-9.]*\).*/
 LNX_CONFIG_OPTS = LNX_MAKEOPTS='$(KERNEL_MAKEOPTS)' PRJ_PATH=$(PKG_BUILD_DIR) MODULE_TYPE=KSLIB modules
 
 EXTRA_CFLAGS:= \
+	-Wno-error \
 	-fno-stack-protector \
 	-Wno-missing-prototypes \
 	-Wno-missing-declarations \
@@ -53,7 +54,7 @@ MAKE_FLAGS+= \
 	SoC=$(CONFIG_TARGET_SUBTARGET) \
 	SHELL="$(BASH)" \
 	PTP_FEATURE=disable SWCONFIG_FEATURE=disable \
-	ISISC_ENABLE=disable MHT_ENABLE=disable \
+	ISISC_ENABLE=enable MHT_ENABLE=disable \
 	IN_QCA803X_PHY=FALSE IN_QCA808X_PHY=FALSE \
 	IN_MALIBU_PHY=FALSE IN_MP_PHY=FALSE \
 	$(LNX_CONFIG_OPTS)
