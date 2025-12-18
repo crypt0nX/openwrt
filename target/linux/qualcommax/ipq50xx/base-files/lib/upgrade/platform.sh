@@ -139,11 +139,27 @@ platform_do_upgrade() {
 		fw_setenv flag_last_success 0
 		fw_setenv flag_boot_success 1
 		fw_setenv flag_try_sys1_failed 8
-		fw_setenv flag_try_sys2_failed 8
-
+		
 		# Kernel and rootfs are placed in 2 different UBI
 		CI_KERN_UBIPART="ubi_kernel"
 		CI_ROOT_UBIPART="rootfs"
+		nand_do_upgrade "$1"
+		;;
+	xiaomi,ax6000)
+		# Make sure that UART is enabled
+		fw_setenv boot_wait on
+		fw_setenv uart_en 1
+
+		# Enforce single partition.
+		fw_setenv flag_boot_rootfs 0
+		fw_setenv flag_last_success 0
+		fw_setenv flag_boot_success 1
+		fw_setenv flag_try_sys1_failed 8
+		fw_setenv flag_try_sys2_failed 8
+
+		# Kernel and rootfs are placed in 2 different UBI
+		CI_UBIPART="rootfs"
+		CI_ROOTPART="ubi_rootfs"
 		nand_do_upgrade "$1"
 		;;
 	yuncore,ax830|\
