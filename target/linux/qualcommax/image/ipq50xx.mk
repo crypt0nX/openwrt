@@ -18,22 +18,6 @@ define Build/mstc-header
 	rm -f $@.crclen
 endef
 
-define Device/xiaomi_ax3000
-  $(call Device/FitImage)
-  $(call Device/UbiFit)
-  SOC := ipq5018
-  DEVICE_VENDOR := Xiaomi
-  DEVICE_MODEL := AX3000
-  BLOCKSIZE := 128k
-  PAGESIZE := 2048
-  DEVICE_DTS_CONFIG := config@mp02.1
-  DEVICE_PACKAGES := \
-	ath11k-firmware-ipq5018-qcn6122 \
-	kmod-ath11k-ahb \
-	wpad-basic-wolfssl
-endef
-TARGET_DEVICES += xiaomi_ax3000
-
 define Device/cmcc_pz-l8
 	$(call Device/FitImageLzma)
 	$(call Device/UbiFit)
@@ -162,6 +146,28 @@ define Device/linksys_spnmx56
 		ipq-wifi-linksys_spnmx56
 endef
 TARGET_DEVICES += linksys_spnmx56
+
+define Device/xiaomi_ax3000
+  $(call Device/FitImageLzma)
+  $(call Device/UbiFit)
+  SOC := ipq5018
+  DEVICE_VENDOR := Xiaomi
+  DEVICE_MODEL := AX3000
+  DEVICE_DTS_CONFIG := config@mp02.1
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  NAND_SIZE := 128m
+  IMAGES += factory.ubi sysupgrade.bin
+  IMAGE/factory.ubi := append-ubi | pad-to 128k
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  DEVICE_PACKAGES := \
+	ath11k-firmware-ipq5018 \
+	ath11k-firmware-ipq5018-qcn6122 \
+	kmod-ath11k-ahb \
+	kmod-qca-nss-dp \
+	wpad-basic-wolfssl
+endef
+TARGET_DEVICES += xiaomi_ax3000
 
 define Device/xiaomi_ax6000
 	$(call Device/FitImage)

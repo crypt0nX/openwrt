@@ -25,8 +25,7 @@
 	};
 
 	chosen {
-		// bootargs = "console=ttyMSM0,115200n8 init=/bin/sh loglevel=7";
-		bootargs-append = " coherent_pool=2M";
+		bootargs-append = " console=ttyMSM0,115200n8 ubi.mtd=rootfs root=/dev/ubiblock0_1 coherent_pool=2M";
 		stdout-path = "serial0:115200n8";
 	};
 
@@ -122,19 +121,17 @@
 &qpic_bam { status = "okay"; };
 
 &qpic_nand {
-	pinctrl-0 = <&qpic_pins>;
-	pinctrl-names = "default";
 	status = "okay";
 
-	nandcs@0 {
-		compatible = "qcom,nandcs";
+	flash@0 {
+		compatible = "spi-nand";
 		reg = <0>;
 		#address-cells = <1>;
-		#size-cells = <1>;
-		nand-ecc-strength = <4>;
-		nand-ecc-step-size = <0x200>;
-		nand-bus-width = <8>;
-
+        #size-cells = <1>;
+		nand-ecc-engine = <&qpic_nand>;
+		nand-ecc-strength = <8>;
+		nand-ecc-step-size = <512>;
+		nand-bus-width = <0x08>;
 		partitions {
 			compatible = "fixed-partitions";
 			#address-cells = <1>;
@@ -164,9 +161,7 @@
 					#size-cells = <1>;
 					mac_addr_dp1: macaddr@0 { reg = <0x0 0x6>; };
 					mac_addr_dp2: macaddr@6 { reg = <0x6 0x6>; };
-					/* caldata for IPQ5018: dd skip=4096 count=131072 */
 					caldata_ipq5018: caldata@1000 { reg = <0x1000 0x20000>;};
-		            /* caldata for QCN6122: dd skip=157696(154KiB) count=131072 */
 					caldata_qcn6122: caldata@26800 { reg = <0x26800 0x20000>; };
 				};
 			};
@@ -174,13 +169,8 @@
 			partition@900000 { label = "bdata"; reg = <0x00900000 0x00080000>; };
 			partition@980000 { label = "crash"; reg = <0x00980000 0x00080000>; };
 			partition@a00000 { label = "crash_syslog"; reg = <0x00a00000 0x00080000>; };
-			partition@a80000 { label = "rootfs"; reg = <0x00a80000 0x06700000>; };
-			/*
 			partition@a80000 { label = "rootfs"; reg = <0x00a80000 0x02400000>; };
-			partition@2e80000 { label = "rootfs_1"; reg = <0x02e80000 0x02400000>; };
-			partition@5280000 { label = "overlay"; reg = <0x05280000 0x01f00000>; };
-			partition@7180000 { label = "rsvd0"; reg = <0x07180000 0x00080000>; };
-			*/
+			partition@2e80000 { label = "rootfs_data"; reg = <0x02e80000 0x04300000>; };
 		};
 	};
 };
@@ -193,13 +183,6 @@
 	reg = <0x39c00000 0x200000>;
 	switch_mac_mode = <0x0f>;
 	switch_access_mode = "local bus";
-	/*
-	clocks = <0x03 0x28 0x03 0x29 0x03 0x86 0x03 0x88 0x03 0x47 0x03 0x48 0x03 0x37 0x03 0x3a 0x03 0x3c 0x03 0x3f 0x03 0x35 0x03 0x36 0x03 0x87 0x03 0x89 0x03 0x39 0x03 0x3b 0x03 0x3e 0x03 0x40 0x03 0x6e 0x03 0x70 0x03 0x38 0x03 0x3d>;
-	clock-names = "cmn_ahb_clk", "cmn_sys_clk", "uniphy_ahb_clk", "uniphy_sys_clk", "gcc_mdio0_ahb_clk", "gcc_mdio1_ahb_clk", "gcc_gmac0_cfg_clk", "gcc_gmac0_sys_clk", "gcc_gmac1_cfg_clk", "gcc_gmac1_sys_clk", "uniphy0_port1_rx_clk", "uniphy0_port1_tx_clk", "uniphy1_port5_rx_clk", "uniphy1_port5_tx_clk", "nss_port1_rx_clk", "nss_port1_tx_clk", "nss_port2_rx_clk", "nss_port2_tx_clk", "gcc_snoc_gmac0_ahb_clk", "gcc_snoc_gmac1_ahb_clk", "gcc_gmac0_ptp_clk", "gcc_gmac1_ptp_clk";
-	
-	resets = <0x03 0x11 0x03 0x5d 0x03 0x16 0x03 0x19 0x03 0x6e 0x03 0x6f>;
-	reset-names = "gephy_bcr_rst", "uniphy_bcr_rst", "gmac0_bcr_rst", "gmac1_bcr_rst", "uniphy1_soft_rst", "gephy_misc_rst";
-	*/
 	qcom,port_phyinfo {
 		port@0 {
 			port_id = <1>;
@@ -239,7 +222,6 @@
 		switch_lan_bmp = <0x0e>;
 		switch_wan_bmp = <0x10>;
 		qca,ar8327-initvals = <0x04 0x7600000 0x08 0x1000000 0x0c 0x80 0x10 0x2613a0 0xe4 0xaa545 0xe0 0xc74164de 0x7c 0x4e 0x94 0x4e>;
-		
 		qcom,port_phyinfo {
 			port@1 { port_id = <1>; phy_address = <0>; };
 			port@2 { port_id = <2>; phy_address = <1>; };
@@ -307,7 +289,6 @@
 	status = "okay";
 	pinctrl-0 = <&mdio1_pins>;
 	pinctrl-names = "default";
-
 	phy-reset-gpio = <&tlmm 26 GPIO_ACTIVE_HIGH>;
 	ethernet-phy@0 { reg = <0x0>; };
 	ethernet-phy@1 { reg = <0x1>; };
@@ -369,44 +350,7 @@
 			bias-pull-up;
 		};
 	};
-
-	qpic_pins: qpic-state {
-		clock-pins {
-			pins = "gpio9";
-			function = "qspi_clk";
-			drive-strength = <8>;
-			bias-disable;
-		};
-		cs-pins {
-			pins = "gpio8";
-			function = "qspi_cs";
-			drive-strength = <8>;
-			bias-disable;
-		};
-		data-pins {
-			pins = "gpio4", "gpio5", "gpio6", "gpio7";
-			function = "qspi_data";
-			drive-strength = <8>;
-			bias-disable;
-		};
-	};
 };
-
-/* disabled due to ath11k_pci not support QCN6102
-//pci@a0000000
-&pcie0_phy { status = "disabled"; };
-&pcie0 {
-    status = "disabled";
-    perst-gpios = <&tlmm 15 GPIO_ACTIVE_LOW>;
-};
-
-//pci@80000000
-&pcie1_phy { status = "disabled"; };
-&pcie1 {
-    status = "disabled";
-    perst-gpios = <&tlmm 27 GPIO_ACTIVE_LOW>;
-};
-*/
 
 &q6v5_wcss {
 	status = "okay";
@@ -420,51 +364,36 @@
 };
 
 &q6_wcss_pd1 {
-	status = "disabled";
-	memory-region = <&q6_region>;
+	status = "okay";
 };
 
 &q6_wcss_pd2 {
 	status = "okay";
-	memory-region = <&q6_region>;
-};
-
-&q6_wcss_pd3 {
-	status = "disabled";
 };
 
 &wifi {
 	// IPQ5018
-	status = "disabled";
+	status = "okay";
 	qcom,multipd_arch;
+	qcom,board_id = <0x10>;
 	qcom,userpd = <1>;
 	qcom,rproc = <&q6_wcss_pd1>;
-	qcom,board_id = <0x10>;
-	qcom,userpd-subsys-name = "q6v5_wcss_userpd1";
-	qcom,ath11k-fw-memory-mode = <1>;
+	qcom,ath11k-fw-memory-mode = <2>;
 	qcom,bdf-addr = <0x4c400000>;
 	qcom,ath11k-calibration-variant = "Xiaomi-AX3000-2G";
-
-	/* caldata from 0:ART nvmem-layout */
-	nvmem-cells = <&caldata_ipq5018>;
-	nvmem-cell-names = "calibration";
 };
 
 &wifi1 {
 	// QCN6102
 	status = "okay";
 	qcom,multipd_arch;
+	qcom,board_id = <0x50>;
 	qcom,userpd = <2>;
 	qcom,rproc = <&q6_wcss_pd2>;
-	qcom,board_id = <0x50>;
 	qcom,userpd-subsys-name = "q6v5_wcss_userpd2";
 	qcom,ath11k-fw-memory-mode = <2>;
 	qcom,bdf-addr = <0x4d300000>;
 	qcom,ath11k-calibration-variant = "Xiaomi-AX3000-5G";
-
-	/* caldata from 0:ART nvmem-layout */
-	nvmem-cells = <&caldata_qcn6122>;
-	nvmem-cell-names = "calibration";
 };
 
 
