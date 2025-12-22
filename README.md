@@ -1,4 +1,4 @@
-[English](README_EN.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | [简体中文](README.zh-CN.md)
 
 # OpenWrt for Xiaomi AX3000
 > **Supported device**: Xiaomi Router AX3000
