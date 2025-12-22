@@ -195,15 +195,6 @@
 			forced-speed = <1000>;
 			forced-duplex = <1>;
 		};
-		/*
-		led_source@0 {
-			source = <0>;
-			mode = "normal";
-			speed = "all";
-			blink_en = "enable";
-			active = "low";
-		};
-		*/
 	};
 };
 
@@ -287,7 +278,7 @@
 
 &mdio1 {
 	status = "okay";
-	pinctrl-0 = <&mdio1_pins>;
+	pinctrl-0 = <&mdio1_pins &switch_reset_pins>;
 	pinctrl-names = "default";
 	phy-reset-gpio = <&tlmm 26 GPIO_ACTIVE_HIGH>;
 	ethernet-phy@0 { reg = <0x0>; };
@@ -298,6 +289,13 @@
 };
 
 &tlmm {
+	switch_reset_pins: switch-reset-pins {
+		pins = "gpio26";
+      	function = "gpio";
+      	drive-strength = <8>;
+     	bias-pull-up;
+	};
+
 	button_pins: button-pins {
 		pins = "gpio25", "gpio23";
 		function = "gpio";
