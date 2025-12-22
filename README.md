@@ -21,7 +21,9 @@
 
 - **进入原厂shell**：可以用[xmir-patcher](https://github.com/openwrt-xiaomi/xmir-patcher)。
 - **切换方法**：
-因为一定要刷到mtd18也就是`rootfs`。所以你当前刷机的系统不能在`rootfs`，不然没法在系统盘上刷，先用`cat /proc/cmdline`看自己在哪个，如果是`ubi.mtd=rootfs_1 root=mtd:ubi_rootfs rootfstype=squashfs cnss2.bdf_integrated=0x24 cnss2.bdf_pci0=0x60 cnss2.bdf_pci1=0x60 cnss2.skip_radio_bmap=4 rootwait uart_en=1 swiotlb=1`，就说明自己是在rootfs_1。
+因为一定要刷到mtd18也就是`rootfs`。所以你当前刷机的系统不能在`rootfs`，不然没法在系统盘上刷，先用`cat /proc/cmdline`看自己在哪个，如果是
+`ubi.mtd=rootfs_1 root=mtd:ubi_rootfs rootfstype=squashfs cnss2.bdf_integrated=0x24 cnss2.bdf_pci0=0x60 cnss2.bdf_pci1=0x60 cnss2.skip_radio_bmap=4 rootwait uart_en=1 swiotlb=1`
+就说明自己是在`rootfs_1`。
 但如果你现在是在`rootfs`，提供两种切换的方法。第一种比较正规，就是用原厂的救砖工具重刷一次，默认会切换一次系统分区，如果刷机前在`rootfs`，刷完后的系统就在`rootfs_1`。第二种就比较快。适合嫌麻烦的，具体做法是直接在`rootfs`上把`mtd18`的东西全拷贝到`mtd19`（也就是`rootfs_1`）,参考以下命令：
 ```bash
 cd /tmp
