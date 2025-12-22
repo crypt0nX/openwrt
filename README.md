@@ -1,68 +1,90 @@
+[English](README_EN.md) | [简体中文](README.zh-CN.md)
+
 # OpenWrt for Xiaomi AX3000
-> **适用设备**：小米路由器 AX3000
+> **Supported device**: Xiaomi Router AX3000
 
 ---
 
-## 硬性要求
+## Hard requirements
 
-1. **必须刷入原厂的 `rootfs`，不能是 `rootfs_1`**  
-   原因：分区表已扩容，原厂的`rootfs_1`以及后面的`overlay`分区被我合并成了一个大的`overlay`；刷入 `rootfs_1` 会造成分区表不匹配，可以用 `cat /proc/cmdline`，看自己现在在哪个。怎么刷具体做法在下面。
-
----
-
-## 前置准备
-
-- **建议准备 UART 并确认可进入 U-Boot**：任何环境变量/UBI 操作都建议在可控的串口环境下进行。
-- **自行下载原厂救砖工具**。
+1. **You must flash the stock `rootfs`, not `rootfs_1`.**  
+   Reason: the partition table has been expanded. I merged the stock `rootfs_1` partition and the following `overlay` partition into one large `overlay`. If you flash `rootfs_1`, the partition layout will not match and you may brick the device.  
+   You can check which slot you are currently booted from with `cat /proc/cmdline`. The detailed flashing steps are below.
 
 ---
 
-## 刷机方法
+## Prerequisites
 
-- **进入原厂shell**：可以用[xmir-patcher](https://github.com/openwrt-xiaomi/xmir-patcher)。
-- **切换方法**：
-因为一定要刷到mtd18也就是`rootfs`。所以你当前刷机的系统不能在`rootfs`，不然没法在系统盘上刷，先用`cat /proc/cmdline`看自己在哪个，如果是
-`ubi.mtd=rootfs_1 root=mtd:ubi_rootfs rootfstype=squashfs cnss2.bdf_integrated=0x24 cnss2.bdf_pci0=0x60 cnss2.bdf_pci1=0x60 cnss2.skip_radio_bmap=4 rootwait uart_en=1 swiotlb=1`
-就说明自己是在`rootfs_1`。
-但如果你现在是在`rootfs`，提供两种切换的方法。第一种比较正规，就是用原厂的救砖工具重刷一次，默认会切换一次系统分区，如果刷机前在`rootfs`，刷完后的系统就在`rootfs_1`。第二种就比较快。适合嫌麻烦的，具体做法是直接在`rootfs`上把`mtd18`的东西全拷贝到`mtd19`（也就是`rootfs_1`）,参考以下命令：
-```bash
-cd /tmp
-umount /dev/mtdblock19 2>/dev/null
-dd if=/dev/mtdblock18 of=/dev/mtdblock19 bs=1M conv=fsync
-
-nvram set flag_try_sys2_failed=0
-nvram set flag_boot_rootfs=1
-nvram set flag_last_success=1
-nvram commit
-reboot
-```
-这样弄完后你应该会从`rootfs_1`启动，不推荐作为长期使用方法，因为你克隆了一个状态是连续的区域，但是作为刷机临时的够了。
-
-- **刷机方法**：
-固件可以用`scp`传上去：`scp  -oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedAlgorithms=+ssh-rsa -O penwrt-qualcommax-ipq50xx-xiaomi_ax3000-squashfs-factory.ubi  root@192.168.31.1:/tmp/`
-然后在`rootfs_1`：
-```bash
-ubiformat /dev/mtd18 -f openwrt-qualcommax-ipq50xx-xiaomi_ax3000-squashfs-factory.ubi
-nvram set flag_try_sys1_failed=0
-nvram set flag_boot_rootfs=0      # 固定槽0/rootfs
-nvram set flag_try_sys2_failed=8  # 让槽1/rootfs_1 永远别尝试
-nvram set flag_last_success=0
-nvram set flag_boot_success=1
-nvram commit
-reboot
-```
-刷完后ip地址是`192.168.31.1`，和小米自带的一样。
-
-## 已知问题
-
-- **5G WIFI无法正常工作**：5G 暂时无法发射信号，但可扫描到周边热点。初步判断是疑似`ath11k`对`QCN6122`的驱动适配问题。需要关注上游（ath11k/mac80211/firmware）修复进展，待上游修复后再跟跟进。
-- 因为内存只有256M所以两个WIFI一起开容易造成OOM，我已经内置了`zarm-swap`，建议关闭一个（反正5g也用不了）。
+- **UART is strongly recommended, and make sure you can enter U-Boot**: any environment variable / UBI operations should be done with a controllable serial console.
+- **Download Xiaomi's official recovery/unbrick tool yourself.**
 
 ---
 
-## 截图
+## Flashing guide
+
+- **Get a stock shell**: you can use [xmir-patcher](https://github.com/openwrt-xiaomi/xmir-patcher).
+- **Switching slots**:  
+  You must flash to **mtd18**, i.e. `rootfs`. Therefore, the system you are currently running **must not** be on `rootfs`, otherwise you cannot write to the active system partition.  
+  Check your current slot with `cat /proc/cmdline`. If you see something like:
+
+  ```text
+  ubi.mtd=rootfs_1 root=mtd:ubi_rootfs rootfstype=squashfs cnss2.bdf_integrated=0x24 cnss2.bdf_pci0=0x60 cnss2.bdf_pci1=0x60 cnss2.skip_radio_bmap=4 rootwait uart_en=1 swiotlb=1
+  ```
+
+  then you are running on `rootfs_1`.
+
+  If you are currently on `rootfs`, there are two ways to switch:
+
+  1) **Recommended**: re-flash once using Xiaomi's official recovery tool. It usually toggles the boot slot automatically: if you were on `rootfs` before flashing, you will boot from `rootfs_1` after flashing.
+
+  2) **Faster (not recommended for long-term use)**: clone everything from `mtd18` (`rootfs`) to `mtd19` (`rootfs_1`), then reboot. Example:
+
+  ```bash
+  cd /tmp
+  umount /dev/mtdblock19 2>/dev/null
+  dd if=/dev/mtdblock18 of=/dev/mtdblock19 bs=1M conv=fsync
+
+  nvram set flag_try_sys2_failed=0
+  nvram set flag_boot_rootfs=1
+  nvram set flag_last_success=1
+  nvram commit
+  reboot
+  ```
+
+  After this, you should boot from `rootfs_1`. This is fine as a temporary step for flashing, but not recommended as a permanent setup.
+
+- **Flashing**:  
+  Upload the factory UBI via `scp`, for example:
+
+  ```bash
+  scp -oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedAlgorithms=+ssh-rsa -O openwrt-qualcommax-ipq50xx-xiaomi_ax3000-squashfs-factory.ubi root@192.168.31.1:/tmp/
+  ```
+
+  Then, while running from `rootfs_1`, flash `mtd18`:
+
+  ```bash
+  ubiformat /dev/mtd18 -f openwrt-qualcommax-ipq50xx-xiaomi_ax3000-squashfs-factory.ubi
+  nvram set flag_try_sys1_failed=0
+  nvram set flag_boot_rootfs=0      # pin slot 0 / rootfs
+  nvram set flag_try_sys2_failed=8  # make slot 1 / rootfs_1 never be tried
+  nvram set flag_last_success=0
+  nvram set flag_boot_success=1
+  nvram commit
+  reboot
+  ```
+
+  After flashing, the IP address is `192.168.31.1` (same as stock Xiaomi firmware).
+
+---
+
+## Known issues
+
+- **5 GHz Wi‑Fi does not work properly**: the 5 GHz radio cannot transmit (no beacon), but it can scan and detect nearby APs. The preliminary suspicion is a driver compatibility issue between `ath11k` and `QCN6122`. Track upstream fixes (ath11k/mac80211/firmware) and follow up once upstream is fixed.
+- With only **256 MB RAM**, enabling both radios can easily cause OOM. I have bundled `zram-swap`; it is recommended to disable one radio anyway (since 5 GHz currently cannot be used).
+
+---
+
+## Screenshots
 
 <img width="1260" height="907" alt="iShot 2025-12-20 23 06 43" src="https://github.com/user-attachments/assets/6a07db5e-5f75-41e1-ab6d-1eaa85427aaf" />
 <img width="1215" height="532" alt="image" src="https://github.com/user-attachments/assets/701f407b-d907-4c2a-9a76-d00a7f9b3b91" />
-
-
